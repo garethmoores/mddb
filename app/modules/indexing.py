@@ -1,5 +1,5 @@
 from modules import app, q, es
-from flask import abort
+from flask import abort, request
 
 @app.route('/index/submit/', methods=['POST'])
 def reindex():
@@ -40,5 +40,5 @@ def reindex_file(filename):
 
 def start_reindex(filename):
     job = q.enqueue(reindex_file, filename)
-    return job.job_id
+    return job.id
     

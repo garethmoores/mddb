@@ -11,6 +11,7 @@ redis = Redis()
 q = Queue(connection=redis)
 
 import modules.hello
+import modules.indexing
 
 if __name__ == "__main__":
 	app.run()
