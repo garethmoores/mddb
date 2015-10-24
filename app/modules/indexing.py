@@ -43,19 +43,33 @@ def reindex_file(filename):
     temp_name = "/tmp/mddb/" + str(uuid.uuid4()) + '-' + filename
     key.key = filename
     key.get_contents_to_filename(temp_name)
-    try:
-        traj = md.load(temp_name)
-        chains = [parse_chain(c) for c in traj.topology.chains]
-        es.index(index="mddb-index", doc_type=filetype, id=filename, 
-            body={"chains": chains})
-    except:
-        print("Failed :(")
+    #try:
+    traj = md.load(temp_name)
+    #chains = [parse_chain(c) for c in traj.topology.chains]
+    full_chains = [[full_chain(c)] for c in traj.topology.chains]
+    residue_set = [all_residues(c) for c in traj.topology.chains]
+    v = []
+    for s in residue_set:
+        v += list(s)
+    es.index(index="mddb-index", doc_type=filetype, id=filename, 
+            body={
+            "full-chains":full_chains,
+            "residue-set":v})
+    #except:
+    #    print("Failed :(")
     os.remove(temp_name)
     return 0
 
 def parse_chain(chain):
     residues = [{"name":r.name, "index":r.index} for r in chain.residues]
     return residues
+
+def full_chain(chain):
+    full_chains = "-".join([r.name for r in chain.residues])
+    return full_chains
+
+def all_residues(chain):
+    return set([r.name for r in chain.residues])
 
 def start_reindex(filename):
     job = q.enqueue(reindex_file, filename)
