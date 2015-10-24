@@ -40,14 +40,22 @@ def reindex_file(filename):
     filetype = filetype[1]
     # grab the file from s3
     key = boto.s3.key.Key(bucket)
-    temp_name = "/tmp/mmdb/" + uuid.uuid4()
+    temp_name = "/tmp/mddb/" + str(uuid.uuid4()) + '-' + filename
     key.key = filename
     key.get_contents_to_filename(temp_name)
-    traj = md.load(temp_name)
-    es.index(index="mddb-index", doc_type=filetype, id=filetype[0], 
-            body={"residues": traj.topology.residues})
+    try:
+        traj = md.load(temp_name)
+        chains = [parse_chain(c) for c in traj.topology.chains]
+        es.index(index="mddb-index", doc_type=filetype, id=filename, 
+            body={"chains": chains})
+    except:
+        print("Failed :(")
     os.remove(temp_name)
     return 0
+
+def parse_chain(chain):
+    residues = [{"name":r.name, "index":r.index} for r in chain.residues]
+    return residues
 
 def start_reindex(filename):
     job = q.enqueue(reindex_file, filename)
