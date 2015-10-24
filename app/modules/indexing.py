@@ -1,5 +1,9 @@
-from modules import app, q, es
+from modules import app, q, es, bucket
 from flask import abort, request
+import mdtraj as md
+import boto
+import uuid
+import os
 
 @app.route('/index/submit/', methods=['POST'])
 def reindex():
@@ -34,9 +38,24 @@ def reindex_file(filename):
     if len(filetype) != 2:
         return -1
     filetype = filetype[1]
-    es.index(index="mddb-index", doc_type=filetype, id=filetype[0], 
-            body={"Hello": "world"})
+    # grab the file from s3
+    key = boto.s3.key.Key(bucket)
+    temp_name = "/tmp/mddb/" + str(uuid.uuid4()) + '-' + filename
+    key.key = filename
+    key.get_contents_to_filename(temp_name)
+    try:
+        traj = md.load(temp_name)
+        chains = [parse_chain(c) for c in traj.topology.chains]
+        es.index(index="mddb-index", doc_type=filetype, id=filename, 
+            body={"chains": chains})
+    except:
+        print("Failed :(")
+    os.remove(temp_name)
     return 0
+
+def parse_chain(chain):
+    residues = [{"name":r.name, "index":r.index} for r in chain.residues]
+    return residues
 
 def start_reindex(filename):
     job = q.enqueue(reindex_file, filename)
