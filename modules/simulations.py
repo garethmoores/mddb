@@ -1,4 +1,4 @@
-from modules import app, db, buket, q
+from modules import app, db, buket, q, es
 from modules.indexing import reindex_and_delete
 from flask import abort, request, render_template, redirect
 from datetime import datetime
@@ -67,6 +67,13 @@ def new_sim():
                 force_field=force_field, protein=protein)
         db.session.add(sim)
         db.session.commit()
+        es.index(index="mddb-index", doc_type="simulation",
+                id=sim.id, body={
+                    "title": title,
+                    "engine": engine,
+                    "force_field": force_field,
+                    "protein": protein
+                    })
         return redirect('/simulations/view/' + str(sim.id))
     else:
         return render_template('simulation_form.html')
@@ -77,7 +84,8 @@ def get_sim(sim_id):
     sim = Simulation.query.filter_by(id=sim_id).first()
     if sim is None:
         abort(404)
-    return render_template('simulation.html', sim=sim)
+    owner = User.query.filter_by(id=sim.owner).first()
+    return render_template('simulation.html', sim=sim, user=user)
 
 @app.route('/simulations/addfile/<sim_id>')
 def upload_file(sim_id):
