@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 from elasticsearch import Elasticsearch
 from rq import Queue
 from redis import Redis
@@ -36,6 +36,13 @@ user_datastore = SQLAlchemyUserDatastore(db, User, Role)
 security = Security(app, user_datastore)
 
 
-@app.route("/")
+@app.route("/", methods=['GET', 'POST'])
 def index():
-    return render_template("index.html")
+    if request.method == 'POST':
+        results = es.search(index="mddb-index", body={
+            "query": {"match": {"title": "*" + request.form['search'] + "*"}}
+	})
+        print(results)
+    else:
+        results = {}
+    return render_template("index.html", results=results)
