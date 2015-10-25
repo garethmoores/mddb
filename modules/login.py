@@ -1,10 +1,5 @@
-from modules import app, db
+from modules import db
 from flask.ext.security import UserMixin, RoleMixin
-
-
-@app.before_first_request
-def create_user():
-    db.create_all()
 
 
 class Role(db.Model, RoleMixin):
@@ -26,6 +21,7 @@ class User(db.Model, UserMixin):
     __tablename__ = "users"
 
     id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255))
     email = db.Column(db.String(255), unique=True)
     password = db.Column(db.String(255))
     active = db.Column(db.Boolean())

@@ -3,16 +3,14 @@ from elasticsearch import Elasticsearch
 from rq import Queue
 from redis import Redis
 import boto
-import os
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.mail import Mail
 from flask.ext.security import Security, SQLAlchemyUserDatastore
+from .config import Config
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://'
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = True
-app.config['SECURITY_REGISTERABLE'] = True
-app.config['SECRET_KEY'] = 'randomsecrety1234'
+app.config.from_object(Config)
+
 
 mail = Mail(app)
 db = SQLAlchemy(app)
@@ -21,19 +19,19 @@ es = Elasticsearch()
 redis = Redis()
 q = Queue(connection=redis)
 
-ACCESS = os.environ['ACCESS']
-KEY = os.environ['KEY']
-
-s3 = boto.connect_s3(ACCESS, KEY)
-bucket = s3.get_bucket('healthhack-mddb')
+s3 = boto.connect_s3(app.config["S3_SECRET"], app.config["S3_KEY"])
+bucket = s3.get_bucket(app.config["S3_BUCKET"])
 
 import modules.hello
 #import modules.indexing
 import modules.login
+import modules.upload
+from modules.login import User, Role
 
-user_datastore = SQLAlchemyUserDatastore(db, login.User, login.Role)
+user_datastore = SQLAlchemyUserDatastore(db, User, Role)
 security = Security(app, user_datastore)
+
 
 @app.route("/")
 def index():
-  return render_template("index.html")
+    return render_template("index.html")
