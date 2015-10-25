@@ -173,6 +173,10 @@ def reindex_file(filename):
     key.key = filename
     key.get_contents_to_filename(temp_name)
     #try:
+    reindex_and_delete(temp_name)
+    return 0
+
+def reindex_and_delete(temp_name):
     traj = md.load(temp_name)
     #chains = [parse_chain(c) for c in traj.topology.chains]
     full_chains = [full_chain(c) for c in traj.topology.chains]
@@ -189,7 +193,6 @@ def reindex_file(filename):
     #except:
     #    print("Failed :(")
     os.remove(temp_name)
-    return 0
 
 def parse_chain(chain):
     residues = [{"name":r.name, "index":r.index} for r in chain.residues]
