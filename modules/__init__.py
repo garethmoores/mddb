@@ -1,25 +1,37 @@
-from flask import Flask
+from flask import Flask, render_template
 from elasticsearch import Elasticsearch
 from rq import Queue
 from redis import Redis
 import boto
-import os
+from flask.ext.sqlalchemy import SQLAlchemy
+from flask.ext.mail import Mail
+from flask.ext.security import Security, SQLAlchemyUserDatastore
+from .config import Config
 
 app = Flask(__name__)
+app.config.from_object(Config)
 
+
+mail = Mail(app)
+db = SQLAlchemy(app)
 es = Elasticsearch()
 
 redis = Redis()
 q = Queue(connection=redis)
 
-ACCESS = os.environ['ACCESS']
-KEY = os.environ['KEY']
-
-s3 = boto.connect_s3(ACCESS, KEY)
-bucket = s3.get_bucket('healthhack-mddb')
+s3 = boto.connect_s3(app.config["S3_SECRET"], app.config["S3_KEY"])
+bucket = s3.get_bucket(app.config["S3_BUCKET"])
 
 import modules.hello
-import modules.indexing
+#import modules.indexing
+import modules.login
+import modules.upload
+from modules.login import User, Role
 
-if __name__ == "__main__":
-        app.run()
+user_datastore = SQLAlchemyUserDatastore(db, User, Role)
+security = Security(app, user_datastore)
+
+
+@app.route("/")
+def index():
+    return render_template("index.html")

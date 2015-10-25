@@ -1,5 +1,5 @@
 from modules import app
 
 @app.route('/hello')
-def index():
+def hello():
 	return 'Hello'
