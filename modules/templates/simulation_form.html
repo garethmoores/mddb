@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Create a new simulation, files will be uploaded in the next step</h2>
+<form method="POST" action="/simulations/new/">
+    <label for="title">Experiment Title</label>
+    <input name="title"></input>
+    <label for="engine">MD Engine Used</label>
+    <input name="engine"></input>
+    <label for="force_field">Force Field Used</label>
+    <input name="force_field"></input>
+    <label for="protein">Protein Simulated</label>
+    <input name="protein"></input>
+    <button type="submit" class="btn btn-primary">
+        Create
+    </button>
+</form>
+{% endblock %}
