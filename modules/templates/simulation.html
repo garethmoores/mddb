@@ -1,6 +1,71 @@
 {% extends "base.html" %}
 
 {% block content %}
- {{ sim.id }}
- {{ sim.title }}
+
+<h2>Simulation Information</h2>
+
+<p> Uploaded by: {{user.email}} </p>
+
+<table class="table">
+<tr>
+<td>
+Simulation Number
+</td>
+<td>
+{{ sim.id }}
+</td>
+</tr>
+<tr>
+<td>
+Date
+</td>
+<td>
+{{ sim.date }}
+</td>
+</tr>
+<tr>
+<td>
+Title
+</td>
+<td>
+{{ sim.title }}
+</td>
+</tr>
+<tr>
+<td>
+Protein Name
+</td>
+<td>
+{{ sim.protein }}
+</td>
+</tr>
+<tr>
+<td>
+Engine
+</td>
+<td>
+{{ sim.engine }}
+</td>
+</tr>
+<tr>
+<td>
+Force Field
+</td>
+<td>
+{{ sim.force_field }}
+</td>
+</tr>
+</table>
+
+<h3>Files for this Simulation</h3>
+<ul>
+{% for file in sim.files %}
+	<li> {{ file.filename }} </li>
+{% endfor %}
+</ul>
+<h3>Add a File</h3>
+<form method="POST" action="/simulations/addfile/{{sim.id}}" enctype="multipart/form-data">
+<input name="file" type="file" />
+<button type="submit" class="btn btn-primary">Upload</button>
+</form>
 {% endblock %}
