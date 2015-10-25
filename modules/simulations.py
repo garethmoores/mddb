@@ -19,14 +19,12 @@ class SimFile(db.Model):
 
 class Simulation(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    owner = db.Column(db.Integer, db.ForeignKey('user.id'))
+    owner = db.Column(db.Integer, db.ForeignKey('users.id'))
     owner_relationship = db.relationship('User', 
             backref=db.backref('simulations', lazy='dynamic'))
     
-    parent = db.Column(db.Integer, nullable=True,
-            db.ForeignKey('simulation.id'))
-    parent_relationship = db.relationship('Simulation',
-            backref=db.backref('child', lazy='dynamic'))
+    parent = db.Column(db.Integer,
+            db.ForeignKey('simulation.id'), nullable=True)
 
     # protein name *
     protein = db.Column(db.String(500))
@@ -40,8 +38,8 @@ class Simulation(db.Model):
     date = db.Column(db.DateTime)
 
     def __init__(self, owner, title, engine, force_field, protein, parent=None):
-        self.date = datettime.utcnow()
-        self.owner = owner.id
+        self.date = datetime.utcnow()
+        self.owner = owner
         self.title = title
         self.engine = engine
         self.force_field = force_field
@@ -49,11 +47,14 @@ class Simulation(db.Model):
         if parent is not None:
             self.parent = parent
 
+Simulation.parent_relationship = db.relationship('Simulation',
+            backref=db.backref('child', lazy='dynamic'), remote_side=Simulation.id)
 
-@app.route('/simulation/new/', methods=['GET', 'POST'])
+
+@app.route('/simulations/new/', methods=['GET', 'POST'])
 def new_sim():
-    if method == 'POST':
-        owner = current_user()
+    if request.method == 'POST':
+        owner = current_user
         title = request.form.get('title', None)
         engine = request.form.get('engine', None)
         force_field = request.form.get('force_field', None)
@@ -61,15 +62,15 @@ def new_sim():
         if title is None or engine is None or force_field is None or protein is None:
             abort(401)
         sim = Simulation(owner=owner.id, title=title, engine=engine, 
-                force_field=firce_field, protein=protein)
+                force_field=force_field, protein=protein)
         db.session.add(sim)
         db.session.commit()
-        return redirect('/simulations/' + str(sim.id))
+        return redirect('/simulations/view/' + str(sim.id))
     else:
         return render_template('simulation_form.html')
 
 
-@app.route('/simulations/<sim_id>', methods=['GET', 'POST'])
+@app.route('/simulations/view/<sim_id>', methods=['GET', 'POST'])
 def get_sim(sim_id):
     sim = Simulation.query.filter_by(id=sim_id).first()
     if sim is None:

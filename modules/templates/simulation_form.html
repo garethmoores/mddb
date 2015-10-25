@@ -4,13 +4,13 @@
 <h2>Create a new simulation, files will be uploaded in the next step</h2>
 <form method="POST" action="/simulations/new/">
     <label for="title">Experiment Title</label>
-    <input id="title"></input>
+    <input name="title"></input>
     <label for="engine">MD Engine Used</label>
-    <input id="engine"></input>
+    <input name="engine"></input>
     <label for="force_field">Force Field Used</label>
-    <input id="force_field"></input>
+    <input name="force_field"></input>
     <label for="protein">Protein Simulated</label>
-    <input id="protein"></input>
+    <input name="protein"></input>
     <button type="submit" class="btn btn-primary">
         Create
     </button>

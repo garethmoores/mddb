@@ -19,13 +19,17 @@ es = Elasticsearch()
 redis = Redis()
 q = Queue(connection=redis)
 
-s3 = boto.connect_s3(app.config["S3_SECRET"], app.config["S3_KEY"])
-bucket = s3.get_bucket(app.config["S3_BUCKET"])
+if app.config.get("S3_SECRET", None) is not None:
+    s3 = boto.connect_s3(app.config["S3_SECRET"], app.config["S3_KEY"])
+    bucket = s3.get_bucket(app.config["S3_BUCKET"])
+else:
+    bucket = None
 
 import modules.hello
 #import modules.indexing
 import modules.login
 import modules.upload
+import modules.simulations
 from modules.login import User, Role
 
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
