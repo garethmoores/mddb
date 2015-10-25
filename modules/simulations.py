@@ -1,10 +1,13 @@
-from modules import app, db, buket, q, es
+from modules import app, db, bucket, q, es
 from modules.indexing import reindex_and_delete
+from modules.login import User
 from flask import abort, request, render_template, redirect
 from datetime import datetime
 from flask.ext.security import current_user
 from werkzeug import secure_filename
 import boto
+import os
+import uuid
 
 class SimFile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -85,17 +88,17 @@ def get_sim(sim_id):
     if sim is None:
         abort(404)
     owner = User.query.filter_by(id=sim.owner).first()
-    return render_template('simulation.html', sim=sim, user=user)
+    return render_template('simulation.html', sim=sim, user=owner)
 
-@app.route('/simulations/addfile/<sim_id>')
+@app.route('/simulations/addfile/<sim_id>', methods=['POST'])
 def upload_file(sim_id):
     sim = Simulation.query.filter_by(id=sim_id).first()
     if sim is None:
         about(404)
     uploaded = request.files['file']
-    filename = str(uuid.uuid4) + secure_filename(uploaded.filename)
+    filename = str(uuid.uuid4()) +"-"+ secure_filename(uploaded.filename)
     uploaded.save(os.path.join('/tmp/mddb/', filename))
-    q.enqueue(to_s3_and_reindex, sum_id, uploaded.filename, filename)
+    q.enqueue(to_s3_and_reindex, sim_id, uploaded.filename, filename)
     return redirect('/simulations/view/' + str(sim_id))
 
 def to_s3_and_reindex(id, filename, local):
@@ -103,5 +106,5 @@ def to_s3_and_reindex(id, filename, local):
     key = boto.s3.key.Key(bucket)
     key.key = os.path.join('/simulations/' + str(id), 
             secure_filename(filename))
-    key.set_contents_from_filename(local)
+    key.set_contents_from_filename(os.path.join('/tmp/mddb/', local))
     reindex_and_delete(local)
