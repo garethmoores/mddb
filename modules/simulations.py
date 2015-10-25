@@ -96,6 +96,10 @@ def upload_file(sim_id):
     filename = str(uuid.uuid4) + secure_filename(uploaded.filename)
     uploaded.save(os.path.join('/tmp/mddb/', filename))
     q.enqueue(to_s3_and_reindex, sum_id, uploaded.filename, filename)
+    file_object = SimFile(filename=os.path.join('/simulations/' + str(sim_id),
+        uploaded.filename), simulation=sim)
+    db.session.add(file_object)
+    db.session.commit()
     return redirect('/simulations/view/' + str(sim_id))
 
 def to_s3_and_reindex(id, filename, local):
