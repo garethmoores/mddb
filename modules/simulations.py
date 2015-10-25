@@ -50,20 +50,23 @@ class Simulation(db.Model):
             self.parent = parent
 
 
-@app.route('/simulation/new/', method=['POST'])
+@app.route('/simulation/new/', methods=['GET', 'POST'])
 def new_sim():
-    owner = current_user()
-    title = request.form.get('title', None)
-    engine = request.form.get('engine', None)
-    force_field = request.form.get('force_field', None)
-    protein = request.form.get('protein', None)
-    if title is None or engine is None or force_field is None or protein is None:
-        abort(401)
-    sim = Simulation(owner=owner.id, title=title, engine=engine, 
-            force_field=firce_field, protein=protein)
-    db.session.add(sim)
-    db.session.commit()
-    return redirect('/simulations/' + str(sim.id))
+    if method == 'POST':
+        owner = current_user()
+        title = request.form.get('title', None)
+        engine = request.form.get('engine', None)
+        force_field = request.form.get('force_field', None)
+        protein = request.form.get('protein', None)
+        if title is None or engine is None or force_field is None or protein is None:
+            abort(401)
+        sim = Simulation(owner=owner.id, title=title, engine=engine, 
+                force_field=firce_field, protein=protein)
+        db.session.add(sim)
+        db.session.commit()
+        return redirect('/simulations/' + str(sim.id))
+    else:
+        return render_template('simulation_form.html')
 
 
 @app.route('/simulations/<sim_id>', methods=['GET', 'POST'])
